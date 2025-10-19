@@ -1,0 +1,123 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"slices"
+	"strconv"
+)
+
+type Todo struct {
+	Id        int    `json:"id"`
+	Title     string `json:"title"`
+	Completed bool   `json:"completed"`
+}
+
+type Text struct {
+	Message string `json:"message"`
+}
+
+var TodoList = []Todo{
+	{Id: 1, Title: "Learning Go", Completed: false},
+	{Id: 2, Title: "Learning React", Completed: false},
+}
+
+func RootHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(Text{
+		Message: "Go server is running on",
+	})
+}
+
+func GetTodosHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(TodoList)
+}
+
+func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id := r.PathValue("id")
+
+	intId, err := strconv.Atoi(id)
+
+	if err != nil {
+		errMessage := Text{
+			Message: "Invalid route param",
+		}
+
+		errJson, _ := json.Marshal(errMessage)
+		http.Error(w, string(errJson), http.StatusBadRequest)
+		return
+	}
+
+	if intId > len(TodoList) {
+		errMessage := Text{
+			Message: "Todo does not exist with given id",
+		}
+
+		errJson, _ := json.Marshal(errMessage)
+		http.Error(w, string(errJson), http.StatusNotFound)
+		return
+	}
+
+	idx := slices.IndexFunc(TodoList, func(todo Todo) bool {
+		return todo.Id == intId
+	})
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(TodoList[idx])
+}
+
+func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id := r.PathValue("id")
+	intId, err := strconv.Atoi(id)
+
+	if err != nil {
+		errMessage := Text{
+			Message: "Invalid route param",
+		}
+
+		errJson, _ := json.Marshal(errMessage)
+		http.Error(w, string(errJson), http.StatusBadRequest)
+	}
+
+	if intId > len(TodoList) {
+		errMessage := Text{
+			Message: "Todo does not exist with given id",
+		}
+
+		errJson, _ := json.Marshal(errMessage)
+		http.Error(w, string(errJson), http.StatusNotFound)
+	}
+
+	updatedTodoList := slices.DeleteFunc(TodoList, func(todo Todo) bool {
+		return todo.Id == intId
+	})
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(updatedTodoList)
+}
+
+func main() {
+	mux := http.NewServeMux()
+
+	mux.Handle("GET /", http.HandlerFunc(RootHandler))
+	mux.Handle("GET /todos", http.HandlerFunc(GetTodosHandler))
+	mux.Handle("GET /todos/{id}", http.HandlerFunc(GetTodoHandler))
+	mux.Handle("DELETE /todos/{id}", http.HandlerFunc(DeleteTodoHandler))
+
+	fmt.Println("Server is running on port:8080")
+
+	err := http.ListenAndServe(":8080", mux)
+	if err != nil {
+		fmt.Println("Server is failed to run", err)
+	}
+}
