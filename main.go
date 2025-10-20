@@ -14,6 +14,10 @@ type Todo struct {
 	Completed bool   `json:"completed"`
 }
 
+type TodoBody struct {
+	Title string `json:"title"`
+}
+
 type Text struct {
 	Message string `json:"message"`
 }
@@ -106,11 +110,38 @@ func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 	encoder.Encode(updatedTodoList)
 }
 
+func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var body Todo
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&body)
+
+	if err != nil {
+		errMessage := Text{
+			Message: "Title is required!",
+		}
+
+		errJson, _ := json.Marshal(errMessage)
+		http.Error(w, string(errJson), http.StatusBadRequest)
+		return
+	}
+
+	body.Completed = false
+	body.Id = TodoList[len(TodoList)-1].Id + 1
+
+	updatedTodoList := append(TodoList, body)
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(updatedTodoList)
+}
+
 func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("GET /", http.HandlerFunc(RootHandler))
 	mux.Handle("GET /todos", http.HandlerFunc(GetTodosHandler))
+	mux.Handle("POST /todos", http.HandlerFunc(CreateTodoHandler))
 	mux.Handle("GET /todos/{id}", http.HandlerFunc(GetTodoHandler))
 	mux.Handle("DELETE /todos/{id}", http.HandlerFunc(DeleteTodoHandler))
 

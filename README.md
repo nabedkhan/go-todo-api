@@ -35,6 +35,10 @@ Endpoints:
 
   - Returns the full TODO list (array of todos).
 
+- POST /todos
+
+  - Returns the full TODO list with new TODO (array of todos).
+
 - GET /todos/{id}
 
   - Returns a single todo by numeric id. Returns 400 for invalid id, 404 if not found.
