@@ -14,10 +14,6 @@ type Todo struct {
 	Completed bool   `json:"completed"`
 }
 
-type TodoBody struct {
-	Title string `json:"title"`
-}
-
 type Text struct {
 	Message string `json:"message"`
 }
@@ -136,6 +132,47 @@ func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
 	encoder.Encode(updatedTodoList)
 }
 
+func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id := r.PathValue("id")
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		errMessage := Text{
+			Message: "Invalid param id",
+		}
+
+		errJson, _ := json.Marshal(errMessage)
+		http.Error(w, string(errJson), http.StatusBadRequest)
+	}
+
+	if intId > len(TodoList) {
+		errMessage := Text{
+			Message: "Todo does not exist with given id",
+		}
+
+		errJson, _ := json.Marshal(errMessage)
+		http.Error(w, string(errJson), http.StatusBadRequest)
+	}
+
+	var body Todo
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(&body)
+
+	idx := slices.IndexFunc(TodoList, func(todo Todo) bool {
+		return todo.Id == intId
+	})
+
+	if body.Title != "" {
+		TodoList[idx].Title = body.Title
+	}
+
+	TodoList[idx].Completed = body.Completed
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(TodoList[idx])
+}
+
 func main() {
 	mux := http.NewServeMux()
 
@@ -143,6 +180,7 @@ func main() {
 	mux.Handle("GET /todos", http.HandlerFunc(GetTodosHandler))
 	mux.Handle("POST /todos", http.HandlerFunc(CreateTodoHandler))
 	mux.Handle("GET /todos/{id}", http.HandlerFunc(GetTodoHandler))
+	mux.Handle("PATCH /todos/{id}", http.HandlerFunc(UpdateTodoHandler))
 	mux.Handle("DELETE /todos/{id}", http.HandlerFunc(DeleteTodoHandler))
 
 	fmt.Println("Server is running on port:8080")
