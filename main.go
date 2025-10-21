@@ -27,15 +27,11 @@ var TodoList = []Todo{
 
 // Route Handlers
 func RootHandler(w http.ResponseWriter, r *http.Request) {
-	encoder := json.NewEncoder(w)
-	encoder.Encode(Text{
-		Message: "Go server is running on",
-	})
+	SendJSON(w, Text{Message: "Go server is running on"})
 }
 
 func GetTodosHandler(w http.ResponseWriter, r *http.Request) {
-	encoder := json.NewEncoder(w)
-	encoder.Encode(TodoList)
+	SendJSON(w, TodoList)
 }
 
 func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,8 +52,7 @@ func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
 		return todo.Id == intId
 	})
 
-	encoder := json.NewEncoder(w)
-	encoder.Encode(TodoList[idx])
+	SendJSON(w, TodoList[idx])
 }
 
 func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -78,8 +73,7 @@ func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 		return todo.Id == intId
 	})
 
-	encoder := json.NewEncoder(w)
-	encoder.Encode(updatedTodoList)
+	SendJSON(w, updatedTodoList)
 }
 
 func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -97,8 +91,7 @@ func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
 
 	TodoList := append(TodoList, body)
 
-	encoder := json.NewEncoder(w)
-	encoder.Encode(TodoList)
+	SendJSON(w, TodoList)
 }
 
 func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -129,8 +122,7 @@ func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
 
 	TodoList[idx].Completed = body.Completed
 
-	encoder := json.NewEncoder(w)
-	encoder.Encode(TodoList[idx])
+	SendJSON(w, TodoList[idx])
 }
 
 // Middlewares
@@ -157,8 +149,12 @@ func HeadersMiddleware(next func(w http.ResponseWriter, r *http.Request)) http.H
 func SendError(w http.ResponseWriter, r *http.Request, message string, statusCode int) {
 	w.WriteHeader(statusCode)
 
+	SendJSON(w, Text{Message: message})
+}
+
+func SendJSON(w http.ResponseWriter, data any) {
 	encoder := json.NewEncoder(w)
-	encoder.Encode(Text{Message: message})
+	encoder.Encode(data)
 }
 
 func main() {
