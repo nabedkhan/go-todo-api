@@ -1,70 +1,62 @@
-# go-todo-api
+Lightweight TODO REST API written in Go. This repo implements a small JSON HTTP API for creating, reading, updating and deleting todo items. It's intended as a minimal, learning-focused example of building a simple web service in Go.
 
-A minimal Go HTTP server that exposes a simple in-memory TODO API. It's a small demo project intended to show basic routing and JSON handling in Go.
+## Project layout
 
-## Features
+Top-level files
 
-- In-memory TODO list (no database)
-- JSON API
-- Endpoints: list todos, get todo by id, delete todo
+- `go.mod` - module definition and Go version
+- `main.go` - application entry point, routes and server startup
 
-## Getting started
+Folders
 
-1. Clone the repository (or open this folder).
-2. Run the server:
+- `db/` - simple data store (in-memory or file-backed helpers)
+- `handlers/` - HTTP handler functions for each endpoint
+- `middlewares/` - HTTP middlewares (CORS/headers etc.)
+- `types/` - shared types (response envelope, todo model)
+- `utils/` - small helper functions for JSON/error responses
+
+## API Endpoints
+
+All responses use `application/json` and follow a envelope with `Success`, `Message`, and `Data` fields.
+
+- `GET /` - root health/info handler
+- `GET /todos` - return all todos
+- `POST /todos` - create a new todo (JSON body)
+- `GET /todos/{id}` - get todo by id
+- `PATCH /todos/{id}` - update an existing todo (JSON body)
+- `DELETE /todos/{id}` - delete a todo by id
+
+Example request/response (create):
+
+Request:
+
+```json
+{
+  "title": "Buy milk",
+  "completed": false
+}
+```
+
+Response envelope:
+
+```json
+{
+  "Success": true,
+  "Message": "Success",
+  "Data": {
+    "id": "1",
+    "title": "Buy milk",
+    "completed": false
+  }
+}
+```
+
+## Run locally
+
+Ensure you have Go installed (1.20+ recommended). From the project root:
 
 ```powershell
-go run main.go
+go run .\main.go
 ```
 
-The server listens on port 8080 by default.
-
-## API
-
-Base URL: http://localhost:8080
-
-Content-Type: application/json for all requests and responses.
-
-Endpoints:
-
-- GET /
-
-  - Response: { "message": "Go server is running on" }
-
-- GET /todos
-
-  - Returns the full TODO list (array of todos).
-
-- POST /todos
-
-  - Returns the full TODO list with new TODO (array of todos).
-
-- GET /todos/{id}
-
-  - Returns a single todo by numeric id. Returns 400 for invalid id, 404 if not found.
-
-- DELETE /todos/{id}
-  - Deletes the todo with the given id and returns the updated list. Returns 400 for invalid id, 404 if not found.
-
-Example responses:
-
-GET /todos
-
-```json
-[
-  { "id": 1, "title": "Learning Go", "completed": false },
-  { "id": 2, "title": "Learning React", "completed": false }
-]
-```
-
-GET /todos/1
-
-```json
-{ "id": 1, "title": "Learning Go", "completed": false }
-```
-
-Error response example (400):
-
-```json
-{ "message": "Invalid route param" }
-```
+The server listens on `:8080` by default.
