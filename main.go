@@ -8,6 +8,7 @@ import (
 	"strconv"
 )
 
+// Structs
 type Todo struct {
 	Id        int    `json:"id"`
 	Title     string `json:"title"`
@@ -18,13 +19,15 @@ type Text struct {
 	Message string `json:"message"`
 }
 
+// global data
 var TodoList = []Todo{
 	{Id: 1, Title: "Learning Go", Completed: false},
 	{Id: 2, Title: "Learning React", Completed: false},
 }
 
+// Route Handlers
 func RootHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	// w.Header().Set("Content-Type", "application/json")
 
 	encoder := json.NewEncoder(w)
 	encoder.Encode(Text{
@@ -33,19 +36,14 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTodosHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	encoder := json.NewEncoder(w)
 	encoder.Encode(TodoList)
 }
 
 func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	id := r.PathValue("id")
 
 	intId, err := strconv.Atoi(id)
-
 	if err != nil {
 		errMessage := Text{
 			Message: "Invalid route param",
@@ -75,11 +73,9 @@ func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	id := r.PathValue("id")
-	intId, err := strconv.Atoi(id)
 
+	intId, err := strconv.Atoi(id)
 	if err != nil {
 		errMessage := Text{
 			Message: "Invalid route param",
@@ -107,8 +103,6 @@ func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	var body Todo
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&body)
@@ -133,9 +127,8 @@ func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	id := r.PathValue("id")
+
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		errMessage := Text{
@@ -173,18 +166,37 @@ func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
 	encoder.Encode(TodoList[idx])
 }
 
+// Middlewares
+// func HeadersMiddleware(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		w.Header().Set("Content-Type", "application/json")
+
+// 		next.ServeHTTP(w, r)
+// 	})
+
+// }
+
+func HeadersMiddleware(next func(w http.ResponseWriter, r *http.Request)) http.Handler {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		next(w, r)
+	}
+
+	return http.HandlerFunc(handler)
+
+}
+
 func main() {
 	mux := http.NewServeMux()
 
-	mux.Handle("GET /", http.HandlerFunc(RootHandler))
-	mux.Handle("GET /todos", http.HandlerFunc(GetTodosHandler))
-	mux.Handle("POST /todos", http.HandlerFunc(CreateTodoHandler))
-	mux.Handle("GET /todos/{id}", http.HandlerFunc(GetTodoHandler))
-	mux.Handle("PATCH /todos/{id}", http.HandlerFunc(UpdateTodoHandler))
-	mux.Handle("DELETE /todos/{id}", http.HandlerFunc(DeleteTodoHandler))
+	mux.Handle("GET /", HeadersMiddleware(RootHandler))
+	mux.Handle("GET /todos", HeadersMiddleware(GetTodosHandler))
+	mux.Handle("POST /todos", HeadersMiddleware(CreateTodoHandler))
+	mux.Handle("GET /todos/{id}", HeadersMiddleware(GetTodoHandler))
+	mux.Handle("PATCH /todos/{id}", HeadersMiddleware(UpdateTodoHandler))
+	mux.Handle("DELETE /todos/{id}", HeadersMiddleware(DeleteTodoHandler))
 
 	fmt.Println("Server is running on port:8080")
-
 	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
 		fmt.Println("Server is failed to run", err)
