@@ -27,8 +27,6 @@ var TodoList = []Todo{
 
 // Route Handlers
 func RootHandler(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("Content-Type", "application/json")
-
 	encoder := json.NewEncoder(w)
 	encoder.Encode(Text{
 		Message: "Go server is running on",
@@ -45,22 +43,12 @@ func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
 
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		errMessage := Text{
-			Message: "Invalid route param",
-		}
-
-		errJson, _ := json.Marshal(errMessage)
-		http.Error(w, string(errJson), http.StatusBadRequest)
+		SendError(w, r, "Invalid route param", http.StatusBadRequest)
 		return
 	}
 
 	if intId > len(TodoList) {
-		errMessage := Text{
-			Message: "Todo does not exist with given id",
-		}
-
-		errJson, _ := json.Marshal(errMessage)
-		http.Error(w, string(errJson), http.StatusNotFound)
+		SendError(w, r, "Todo does not exist with given id", http.StatusNotFound)
 		return
 	}
 
@@ -77,21 +65,13 @@ func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		errMessage := Text{
-			Message: "Invalid route param",
-		}
-
-		errJson, _ := json.Marshal(errMessage)
-		http.Error(w, string(errJson), http.StatusBadRequest)
+		SendError(w, r, "Invalid route param", http.StatusBadRequest)
+		return
 	}
 
 	if intId > len(TodoList) {
-		errMessage := Text{
-			Message: "Todo does not exist with given id",
-		}
-
-		errJson, _ := json.Marshal(errMessage)
-		http.Error(w, string(errJson), http.StatusNotFound)
+		SendError(w, r, "Todo does not exist with given id", http.StatusNotFound)
+		return
 	}
 
 	updatedTodoList := slices.DeleteFunc(TodoList, func(todo Todo) bool {
@@ -108,22 +88,17 @@ func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&body)
 
 	if err != nil {
-		errMessage := Text{
-			Message: "Title is required!",
-		}
-
-		errJson, _ := json.Marshal(errMessage)
-		http.Error(w, string(errJson), http.StatusBadRequest)
+		SendError(w, r, "Title is required!", http.StatusBadRequest)
 		return
 	}
 
 	body.Completed = false
 	body.Id = TodoList[len(TodoList)-1].Id + 1
 
-	updatedTodoList := append(TodoList, body)
+	TodoList := append(TodoList, body)
 
 	encoder := json.NewEncoder(w)
-	encoder.Encode(updatedTodoList)
+	encoder.Encode(TodoList)
 }
 
 func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -131,21 +106,13 @@ func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
 
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		errMessage := Text{
-			Message: "Invalid param id",
-		}
-
-		errJson, _ := json.Marshal(errMessage)
-		http.Error(w, string(errJson), http.StatusBadRequest)
+		SendError(w, r, "Invalid param id", http.StatusNotFound)
+		return
 	}
 
 	if intId > len(TodoList) {
-		errMessage := Text{
-			Message: "Todo does not exist with given id",
-		}
-
-		errJson, _ := json.Marshal(errMessage)
-		http.Error(w, string(errJson), http.StatusBadRequest)
+		SendError(w, r, "Todo does not exist with given id", http.StatusBadRequest)
+		return
 	}
 
 	var body Todo
@@ -184,6 +151,14 @@ func HeadersMiddleware(next func(w http.ResponseWriter, r *http.Request)) http.H
 
 	return http.HandlerFunc(handler)
 
+}
+
+// Utils
+func SendError(w http.ResponseWriter, r *http.Request, message string, statusCode int) {
+	w.WriteHeader(statusCode)
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(Text{Message: message})
 }
 
 func main() {
