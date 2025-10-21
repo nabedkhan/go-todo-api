@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"slices"
 	"strconv"
 
 	"github.com/nabedkhan/go-todo-api/db"
@@ -20,7 +19,7 @@ func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if intId > len(db.TodoList) {
+	if intId > db.GetTodosLength() {
 		utils.SendError(w, r, "Todo does not exist with given id", http.StatusBadRequest)
 		return
 	}
@@ -29,19 +28,11 @@ func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.Decode(&body)
 
-	idx := slices.IndexFunc(db.TodoList, func(todo types.Todo) bool {
-		return todo.Id == intId
-	})
-
-	if body.Title != "" {
-		db.TodoList[idx].Title = body.Title
-	}
-
-	db.TodoList[idx].Completed = body.Completed
+	updatedTodo := db.UpdateTodo(intId, body)
 
 	utils.SendJSON(w, types.Response{
-		Data:    db.TodoList[idx],
-		Success: true,
 		Message: "Todo " + id + " updated successfully",
+		Success: true,
+		Data:    updatedTodo,
 	})
 }

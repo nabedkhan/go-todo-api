@@ -20,13 +20,13 @@ func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body.Completed = false
-	body.Id = db.TodoList[len(db.TodoList)-1].Id + 1
+	body.Id = db.GetLastTodoId() + 1
 
-	TodoList := append(db.TodoList, body)
+	db.CreateTodo(body)
 
 	utils.SendJSON(w, types.Response{
 		Message: "New Todo created successfully",
 		Success: true,
-		Data:    TodoList,
+		Data:    db.GetTodos(),
 	})
 }

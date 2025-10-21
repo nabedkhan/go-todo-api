@@ -12,6 +12,6 @@ func GetTodosHandler(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSON(w, types.Response{
 		Message: "Todos fetched successfully",
 		Success: true,
-		Data:    db.TodoList,
+		Data:    db.GetTodos(),
 	})
 }

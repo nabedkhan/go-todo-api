@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"slices"
 	"strconv"
 
 	"github.com/nabedkhan/go-todo-api/db"
@@ -19,18 +18,16 @@ func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if intId > len(db.TodoList) {
+	if intId > db.GetTodosLength() {
 		utils.SendError(w, r, "Todo does not exist with given id", http.StatusNotFound)
 		return
 	}
 
-	idx := slices.IndexFunc(db.TodoList, func(todo types.Todo) bool {
-		return todo.Id == intId
-	})
+	todoList := db.GetTodoById(intId)
 
 	utils.SendJSON(w, types.Response{
 		Message: "Todo " + id + " fetched successfully",
 		Success: true,
-		Data:    db.TodoList[idx],
+		Data:    todoList,
 	})
 }
