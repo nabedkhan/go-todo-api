@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -26,7 +27,7 @@ func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
 	todoList := db.GetTodoById(intId)
 
 	utils.SendJSON(w, types.Response{
-		Message: "Todo " + id + " fetched successfully",
+		Message: fmt.Sprintf("Todo %s fetched successfully", id),
 		Success: true,
 		Data:    todoList,
 	})

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -31,7 +32,7 @@ func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
 	updatedTodo := db.UpdateTodo(intId, body)
 
 	utils.SendJSON(w, types.Response{
-		Message: "Todo " + id + " updated successfully",
+		Message: fmt.Sprintf("Todo %s updated successfully", id),
 		Success: true,
 		Data:    updatedTodo,
 	})

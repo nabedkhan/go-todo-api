@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -26,7 +27,7 @@ func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 	db.DeleteTodo(intId)
 
 	utils.SendJSON(w, types.Response{
-		Message: "Todo " + id + " fetched successfully",
+		Message: fmt.Sprintf("Todo %s deleted successfully", id),
 		Success: true,
 		Data:    db.GetTodos(),
 	})
